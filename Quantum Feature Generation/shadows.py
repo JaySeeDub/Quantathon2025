@@ -237,31 +237,3 @@ def build_feature_matrix_from_circuits(
         X[k, :] = [feats[P] for P in pauli_list]
     return X
 
-
-# ----------------------------
-# Example usage (self-test)
-# ----------------------------
-if __name__ == "__main__":
-    # Tiny smoke test on a trivial 3-qubit state
-    from qiskit import QuantumCircuit
-
-    n = 3
-    qc = QuantumCircuit(n)
-    qc.h(0); qc.cx(0, 1); qc.h(2)  # some entanglement + superposition
-
-    cfg = ShadowConfig(T=100, shots=512, seed=7)
-
-    # Choose some features: singles + all weight-2 ZZ
-    singles = paulis_singles_xyz(n)
-    zz_pairs = paulis_all_weight2(n, axes=("Z",))  # only ZZ, all pairs
-    paulis = singles + zz_pairs
-
-    bases, outs = collect_shadows(qc, cfg)
-    feats = estimate_pauli_expectations(bases, outs, paulis)
-
-    # Pretty-print a few features
-    names = [label_of(P) for P in paulis[:10]]
-    vals = [feats[P] for P in paulis[:10]]
-    print("First 10 features:")
-    for name, val in zip(names, vals):
-        print(f"  {name:>6s}  ->  {val:+.4f}")
