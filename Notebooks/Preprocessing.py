@@ -3,110 +3,67 @@
 from Imports import *
 
 # Dataset Preprocessing
-class JetDataset(Dataset):
-    def __init__(self, data, n_events):
-        self.images = torch.tensor(data['image'][:n_events, 6:-3, 5:-4], dtype=torch.float32)
-        self.flipped_images = torch.flip(self.images,[1])
+class ClassificationDataset(Dataset):
 
-        # Normalize
-        self.images = (self.images - self.images.min()) / (self.images.max() - self.images.min())
-        self.flipped_images = (self.flipped_images - self.flipped_images.min()) / (self.flipped_images.max() - self.flipped_images.min())
+    def __init__(self, X, y):
 
-        # ----- ΔR Calculation -----
-        print(f"Image shape: {self.images.shape}")
-        H, W = self.images[0].shape
-        center_x, center_y = (W - 1) / 2, (H - 1) / 2  # center = (12, 12)
-
-        # Coordinate grid
-        x_coords, y_coords = torch.meshgrid(
-            torch.arange(W, dtype=torch.float32),
-            torch.arange(H, dtype=torch.float32),
-            indexing='ij'
-        )
-
-        # Distance from center
-        dists = torch.sqrt((x_coords - center_x) ** 2 + (y_coords - center_y) ** 2)
-
-        # Weighted: sum(pixel * distance) / sum(pixel)
-        weights = self.images
-        weight_norm = self.images.max()
-
-        dR = (weights * dists) / weight_norm
-
-        # dim = (1,2,3)
-        dR_mean = dR.mean(dim = (1,2))
-        dR_std = dR.std(dim = (1,2))
-        print(f"dR Mean: {dR_mean.shape}")
-        print(f"dR STD: {dR_std.shape}")
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+        if isinstance(y, pd.Series) or isinstance(y, pd.DataFrame):
+            y = y.values
+            
+        self.X = torch.from_numpy(X.copy()).float()
+        self.y = torch.from_numpy(y.copy()).float()
         
-        # Pixel stats
-        pixel_mean = weights.mean(dim = (1,2))
-        pixel_std = weights.std(dim = (1,2))
-        print(f"Pixel Mean: {pixel_mean.shape}")
-        print(f"Pixel STD: {pixel_std.shape}")
-
-        self.features = torch.tensor(np.stack([
-            data['signal'][:n_events],
-            data['jet_eta'][:n_events],
-            data['jet_pt'][:n_events],
-            data['jet_mass'][:n_events],
-            data['jet_delta_R'][:n_events],
-            dR_mean, 
-            dR_std, 
-            pixel_mean, 
-            pixel_std
-        ], axis=1), dtype=torch.float32)
-        
-        self.flipped_features = torch.tensor(np.stack([
-            data['signal'][:n_events],
-            -data['jet_eta'][:n_events],
-            data['jet_pt'][:n_events],
-            data['jet_mass'][:n_events],
-            data['jet_delta_R'][:n_events],
-            dR_mean, 
-            dR_std, 
-            pixel_mean, 
-            pixel_std,
-        ], axis=1), dtype=torch.float32)
-
-        # Normalize just pt and mass features here also
-        # Normalize jet_mass (index 2)
-        self.features[:, 2] = (self.features[:, 2]-self.features[:, 2].min()) / (self.features[:, 2].abs().max()-self.features[:, 2].min())
-        
-        # Normalize jet_pt (index 3)
-        self.features[:, 3] = (self.features[:, 3]-self.features[:, 3].min()) / (self.features[:, 3].abs().max()-self.features[:, 3].min())
-        
-        # Same for flipped features
-        self.flipped_features[:, 2] = (self.flipped_features[:, 2]-self.flipped_features[:, 2].min()) / (self.flipped_features[:, 2].max()-self.flipped_features[:, 2].min())
-        self.flipped_features[:, 3] = (self.flipped_features[:, 3]-self.flipped_features[:, 3].min()) / (self.flipped_features[:, 3].max()-self.flipped_features[:, 3].min())
-
-        print("ΔR min:", dR.min().item())
-        print("ΔR max:", dR.max().item())
-        
-        print("ΔR mean min:", dR_mean.min().item())
-        print("ΔR mean max:", dR_mean.max().item())
-        
-        print("ΔR std min:", dR_std.min().item())
-        print("ΔR std max:", dR_std.max().item())
-        
-        print("Weights (pixel intensity) min:", weights.min().item())
-        print("Weights (pixel intensity) max:", weights.max().item())
-        
-        print("Pixel mean min:", pixel_mean.min().item())
-        print("Pixel mean max:", pixel_mean.max().item())
-        
-        print("Pixel std min:", pixel_std.min().item())
-        print("Pixel std max:", pixel_std.max().item())
-
     def __len__(self):
-        return len(self.features)
-
+        return len(self.X)
     def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+   
+def Preprocess(df_train, df_test, balance = None, classes = 'binary'):
 
-        image = self.images[idx]
-        flipped_image = self.flipped_images[idx]
-        features = self.features[idx]
-        flipped_features = self.flipped_features[idx]
+    # Separate features and targets
+    X_train = df_train.drop(['ef_class', 'ef_binary'], axis=1, errors='ignore')
+    X_test = df_test.drop(['ef_class', 'ef_binary'], axis=1, errors='ignore')
 
-        return image, features, flipped_image, flipped_features
+    
+    y_train_binary = df_train['ef_binary']
+    y_test_binary = df_test['ef_binary']
+    
+    y_train_class = df_train['ef_class']
+    y_test_class = df_test['ef_class']
+
+    if classes == 'binary':
+        y_train = y_train_binary
+    else:
+        y_train = y_train_class
+    
+    # Handle missing values - TO CHECK LATER (drop or get median for the subclass)
+    imputer = SimpleImputer(strategy='mean')
+    
+    X_train_imputed = pd.DataFrame(imputer.fit_transform(X_train), columns=X_train.columns)
+    X_test_imputed = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns)
+    
+    # Normalize features
+    
+    # use for -1 to 1
+    #scaler = StandardScaler()
+
+    #use for 0 to 1
+    scaler= MinMaxScaler(feature_range=(0, 1))
+    
+    X_train_scaled = scaler.fit_transform(X_train_imputed)
+    X_test_scaled = scaler.transform(X_test_imputed)
+    
+    X_train_scaled = pd.DataFrame(X_train_scaled, columns=X_train.columns)
+    X_test_scaled = pd.DataFrame(X_test_scaled, columns=X_test.columns)
+
+    if balance == 'smote':
+        smote_class = SMOTE(random_state=42)
+        X_train, y_train = smote_class.fit_resample(X_train_scaled, y_train)
+
+    X_test = X_test_scaled
+    y_test = y_test_class
+
+    return X_train, y_train, X_test, y_test
 
