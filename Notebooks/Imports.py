@@ -9,7 +9,6 @@ from torch.autograd import grad
 import matplotlib.pyplot as plt
 import numpy as np
 import torch.nn as nn
-from sklearn.metrics import roc_auc_score, accuracy_score, roc_curve, auc
 import pennylane as qml
 from pennylane.templates import RandomLayers
 from pennylane.qnn import TorchLayer
@@ -35,3 +34,5 @@ from imblearn.over_sampling import SMOTE
 from xgboost import XGBClassifier
 import warnings
 from sklearn.model_selection import train_test_split
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve, f1_score, accuracy_score
