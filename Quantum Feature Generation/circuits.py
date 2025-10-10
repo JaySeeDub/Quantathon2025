@@ -175,3 +175,10 @@ def _pairs_for_topology(
         # Open chain; no wrap-around.
         return [(i, i + 1) for i in range(n - 1)]
     raise ValueError("entanglement must be 'full', 'ring', or 'linear'")
+
+def customized_entanglement(qc, indices):
+    
+    for x,y in indices:
+        qc.cx(x,y)
+        
+    return qc
