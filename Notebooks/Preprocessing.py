@@ -25,7 +25,7 @@ def Preprocess(df_train, df_test, df_val, balance = None, classes = 'binary'):
     # Separate features and targets
     X_train = df_train.drop(['ef_class', 'ef_binary'], axis=1, errors='ignore')
     X_test = df_test.drop(['ef_class', 'ef_binary'], axis=1, errors='ignore')
-    X_val = df_test.drop(['ef_class', 'ef_binary'], axis=1, errors='ignore')
+    X_val = df_val.drop(['ef_class', 'ef_binary'], axis=1, errors='ignore')
     
     y_train_binary = df_train['ef_binary']
     y_test_binary = df_test['ef_binary']
