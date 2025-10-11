@@ -65,17 +65,19 @@ def build_circuit(
 
     # ---------- 2) Encoding ----------
     qc = QuantumCircuit(n, name="encode+entangle")
-    _apply_angle_encoding(qc, thetas, encoding_axes)
 
-    # ---------- 3) Entangling block ----------
-    _add_entangling_layer(
-        qc,
-        num_layers=num_layers,
-        entanglement=entanglement,
-        gate=gate,
-        alternate_directions=alternate_directions,
-        add_barriers=add_barriers,
-    )
+    for layer in range(num_layers):
+        _apply_angle_encoding(qc, thetas, encoding_axes)
+
+        # ---------- 3) Entangling block ----------
+        _add_entangling_layer(
+            qc,
+            entanglement=entanglement,
+            gate=gate,
+            alternate_directions=alternate_directions,
+        )
+        if add_barriers:
+            qc.barrier()
     return qc
 
 
@@ -116,14 +118,11 @@ def _apply_angle_encoding(
 def _add_entangling_layer(
     qc: QuantumCircuit,
     *,
-    num_layers: int = 1,
     entanglement: Literal["full", "ring", "linear"] = "full",
     gate: Literal["cx", "cz"] = "cx",
     alternate_directions: bool = True,
-    add_barriers: bool = True,
 ) -> None:
     """
-    Adds `num_layers` entangling layers to `qc` in-place.
 
     Topologies
     ----------
@@ -142,23 +141,20 @@ def _add_entangling_layer(
     # Build pair list once (deduplicated and safe).
     pairs = _pairs_for_topology(n, entanglement)
 
-    for layer in range(num_layers):
-        flipped = (gate == "cx") and alternate_directions and (layer % 2 == 1)
 
-        for (i, j) in pairs:
-            if gate == "cx":
-                # Flip control/target every other layer to share control load,
-                # which can help mitigate readout and direction-specific noise.
-                c, t = (j, i) if flipped else (i, j)
-                qc.cx(c, t)
-            elif gate == "cz":
-                # CZ is symmetric; no need to flip.
-                qc.cz(i, j)
-            else:
-                raise ValueError("gate must be 'cx' or 'cz'.")
+    for (i, j) in pairs:
+        if gate == "cx":
+            # Flip control/target every other layer to share control load,
+            # which can help mitigate readout and direction-specific noise.
+            c, t = (i, j)
+            qc.cx(c, t)
+        elif gate == "cz":
+            # CZ is symmetric; no need to flip.
+            qc.cz(i, j)
+        else:
+            raise ValueError("gate must be 'cx' or 'cz'.")
 
-        if add_barriers and layer != num_layers - 1:
-            qc.barrier()
+
 
 
 def _pairs_for_topology(
