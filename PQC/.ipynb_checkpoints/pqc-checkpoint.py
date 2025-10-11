@@ -21,7 +21,7 @@ import pandas as pd
 
 # ---- Aer Estimator (GPU if available) ----
 backend_options = {
-    "device": "GPU",  # change to "CPU" if your build lacks GPU
+    "device": "CPU",  # change to "CPU" if your build lacks GPU
 }
 est = Estimator(backend_options=backend_options)
 
