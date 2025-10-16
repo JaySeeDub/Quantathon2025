@@ -84,7 +84,7 @@ def collect_shadows(
     bases_list = [random_bases(n, rng) for _ in range(cfg.T)]
 
     # Prepare backend
-    backend = cfg.backend or AerSimulator(seed_simulator=cfg.seed)
+    backend = cfg.backend or AerSimulator(seed_simulator=cfg.seed, device = 'GPU')
 
     # Build circuits for all rounds
     circuits = [add_measurement_layer(stateprep, b) for b in bases_list]
