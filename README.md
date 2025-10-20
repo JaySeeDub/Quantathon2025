@@ -1,4 +1,11 @@
-# SCQuantum-SRNL-Challenge-2025
-Repository for the SRNL Challenge at SCQuantum QuantathonV2. 
+# qBraid  GPU Challenge
 
-[<img src="https://qbraid-static.s3.amazonaws.com/logos/Launch_on_qBraid_white.png" width="150">](https://account.qbraid.com?gitHubUrl=https://github.com/TariniHardikar/SCQuantum-SRNL-Challenge-2025.git)
+# Demo
+The 'demo' folder contains a demo jupyter notebook complete with our pipeline and highlights why it necessitates the use of GPUs.
+
+# Installation instructions
+1. Create a virtural environment. (Skip this on qBraid.)
+2. `pip install -r requirements.txt ` 
+    * Note this repo was prepared using python 3.10. It DOES NOT WORK for python 3.13. We did not test any other versions of python.
+3. Read through the demo notebook.
+

@@ -67,7 +67,7 @@ def add_measurement_layer(base: QuantumCircuit, bases: Sequence[str]) -> Quantum
 def collect_shadows(
     stateprep: QuantumCircuit,
     cfg: ShadowConfig = ShadowConfig(),
-    device = 'GPU'
+    device = 'CPU',
 ) -> Tuple[List[List[str]], List[np.ndarray]]:
     """
     Run T random local-basis rounds on `stateprep`.
@@ -76,7 +76,7 @@ def collect_shadows(
     -------
     bases_list : list length T
         Each element is a length-n list of 'X'/'Y'/'Z' strings.
-    outcomes : list length T!which python
+    outcomes : list length Tz
         Each element is a (shots, n) array of ±1 measurement outcomes.
         Bit order is q0..q(n-1) across columns.
     """
@@ -89,16 +89,14 @@ def collect_shadows(
 
     # Build circuits for all rounds
     circuits = [add_measurement_layer(stateprep, b) for b in bases_list]
-    
-    pubs = (circuit for circuit in circuits)
 
     # Execute batched
-    job = backend.run(pubs = pubs)
-    result = job.result()[0].data.meas
+    job = backend.run(circuits, shots=cfg.shots)
+    result = job.result()
 
     outcomes: List[np.ndarray] = []
     for t in range(cfg.T):
-        counts = result.get_counts()  # dict: bitstring -> count
+        counts = result.get_counts(t)  # dict: bitstring -> count
         # Convert to matrix of ±1 with qubit columns in order q0..q(n-1)
         mats = []
         for bitstr, c in counts.items():
@@ -226,7 +224,7 @@ def build_feature_matrix_from_circuits(
     circuits: Sequence[QuantumCircuit],
     pauli_list: Sequence[Pauli],
     cfg: ShadowConfig = ShadowConfig(),
-    device = 'GPU',
+    device = 'CPU'
 ) -> np.ndarray:
     """
     For each circuit, collect random-basis measurements and estimate features.
@@ -236,7 +234,7 @@ def build_feature_matrix_from_circuits(
     F = len(pauli_list)
     X = np.zeros((N, F), dtype=float)
     for k, circ in enumerate(circuits):
-        bases, outs = collect_shadows(circ, cfg, device = device)
+        bases, outs = collect_shadows(circ, cfg, device=device)
         feats = estimate_pauli_expectations(bases, outs, pauli_list)
         X[k, :] = [feats[P] for P in pauli_list]
     return X
