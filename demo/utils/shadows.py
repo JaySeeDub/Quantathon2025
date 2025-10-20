@@ -89,14 +89,16 @@ def collect_shadows(
 
     # Build circuits for all rounds
     circuits = [add_measurement_layer(stateprep, b) for b in bases_list]
+    
+    pubs = (circuit for circuit in circuits)
 
     # Execute batched
-    job = backend.run(circuits, shots=cfg.shots)
-    result = job.result()
+    job = backend.run(pubs = pubs)
+    result = job.result()[0].data.meas
 
     outcomes: List[np.ndarray] = []
     for t in range(cfg.T):
-        counts = result.get_counts(t)  # dict: bitstring -> count
+        counts = result.get_counts()  # dict: bitstring -> count
         # Convert to matrix of ±1 with qubit columns in order q0..q(n-1)
         mats = []
         for bitstr, c in counts.items():
