@@ -36,3 +36,10 @@ import warnings
 from sklearn.model_selection import train_test_split
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve, f1_score, accuracy_score
+
+# Imports for Quantum Kernel Estimation
+from sklearn.metrics.pairwise import linear_kernel, polynomial_kernel, rbf_kernel, sigmoid_kernel
+from sklearn.svm import SVC
+from qiskit.circuit.library import zz_feature_map
+from qiskit_machine_learning.kernels import FidelityStatevectorKernel
+
