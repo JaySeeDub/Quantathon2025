@@ -1,4 +1,5 @@
 # qBraid  GPU Challenge
+[<img src="https://qbraid-static.s3.amazonaws.com/logos/Launch_on_qBraid_white.png" width="150">](https://account.qbraid.com?gitHubUrl=https://github.com/JaySeeDub/Quantathon2025/tree/qBraid-GPU-challenge)
 
 # Demo
 The 'demo' folder contains a demo jupyter notebook complete with our pipeline and highlights why it necessitates the use of GPUs.
