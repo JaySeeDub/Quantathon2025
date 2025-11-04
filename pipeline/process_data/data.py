@@ -39,10 +39,7 @@ try:
 except Exception:  # pragma: no cover
     SMOTE = None  # allows importing without imblearn installed
 
-# wrapper for pandas.load_csv
-def load_csv(filename):
-    df = pd.load_csv(filename)
-    return df
+
 # wrapper for df.to_csv
 def save_csv(df, filename, index = False):
     df.to_csv(filename, index = index)
