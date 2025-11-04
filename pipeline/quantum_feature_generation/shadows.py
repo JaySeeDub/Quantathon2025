@@ -1,26 +1,11 @@
-# shadows.py
-"""
-Classical Shadows utilities for measurement-based feature embedding.
-
-This module supports:
-  - Random local Pauli (X/Y/Z) measurement rounds (Pauli-3 scheme)
-  - Estimating many Pauli-string expectations from the same measurement pool
-  - Ready-made feature banks (singles, ring pairs, all weight-2)
-  - Building an (N_samples x N_features) feature matrix from circuits
-
-References:
-  - Huang, Kueng, Preskill, "Predicting many properties of a quantum state from
-    few measurements", Nature Physics 16, 1050–1057 (2020).
-    (Pauli-3 randomized local measurements; many-observable estimation)
-"""
-
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence, Tuple, Dict, Optional
 import numpy as np
-
+import pandas as pd
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
+from .circuits import build_circuit
 
 
 # ----------------------------
@@ -235,4 +220,67 @@ def build_feature_matrix_from_circuits(
         feats = estimate_pauli_expectations(bases, outs, pauli_list)
         X[k, :] = [feats[P] for P in pauli_list]
     return X
+
+def normalize_new_features(unnormalized_features):
+    from sklearn.preprocessing import MinMaxScaler
+
+    scaler = MinMaxScaler(feature_range=(0,1))
+
+    normalized_features = scaler.fit_transform(unnormalized_features)
+    return normalized_features
+    
+
+def generate_shadows(df, 
+                     ring_paulis = ['XY'], 
+                     entanglement = 'ring', 
+                     num_layers = 1, 
+                     encoding_axis = ("rx","ry"), 
+                     train_test_val = None, 
+                     filename_save = None):
+
+    """
+    df: pandas dataframe containg relevant data
+    ring_paulis: Defines ring of specified observables. Takes an list of type list["PP'"] where P and P' are pauli observables (either I, X, Y or Z)
+    entanglement: Defines entanglement of the circuit. Pass 'full', 'ring', or 'linear'
+    num_layers: Number of ansatz layers. Layers involve data reuploading
+    encoding_axis: Encoding the data via x-rotations, y-rotations, z-rotations, or some combination
+    train_test_val: Adds the appropriate string to the of the file containing the new features
+    filename_save: specify the name and path to save the new features to. Othwewise, it gets saved to the default location in Quantathon2025/Data. This name must be csv
+    """
+
+    # Converts to numpy array
+    data = df.to_numpy()
+    
+    # Gets size of feature space. We will use 1 qubit per feature
+    n = len(data[0])
+
+    # Builds a circuit for each datapoint
+    circuits = [build_circuit(x, encoding_axes=encoding_axis, entanglement=entanglement, gate="cx", num_layers=num_layers)
+                for x in data]
+    
+    # Adds the Pauli Operators for each qubit as observables.
+    paulis = paulis_singles_xyz(n)
+
+    # Adds the pauli rings as observables for each qubit pair
+    for ring in ring_paulis:
+        ring.upper()
+        paulis += paulis_ring_pairs(n, (ring[0], ring[1]))
+
+    # Sets some parameters for shadow measurements
+    cfg = ShadowConfig(T = 200, shots = 1000, seed = 123)
+
+    # Generates the new features by collecting the shadows and estimating the expectation values
+    new_features = build_feature_matrix_from_circuits(circuits, paulis, cfg)
+    
+    # Normalizes the features
+    normalized_features = normalize_new_features(new_features)
+
+    # Save the data
+    df = pd.DataFrame(normalized_features)
+
+    if filename_save:
+        df.to_csv(filename_save, index = False)
+    else:
+        filename_save = f"../Data/shadow_features/{normalized_features.shape[1]}_features{ring_paulis[0]}{ring_paulis[1]}_{train_test_val}_QuantumLayers{num_layers}.csv"
+        df.to_csv(filename_save, index = False)
 
