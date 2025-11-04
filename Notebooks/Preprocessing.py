@@ -21,7 +21,7 @@ class ClassificationDataset(Dataset):
         return self.X[idx], self.y[idx]
    
 def Preprocess(df_train, df_test, df_val, balance = None, classes = 'binary'):
- 
+
     # Separate features and targets
     X_train = df_train.drop(['ef_class', 'ef_binary'], axis=1, errors='ignore')
     X_test = df_test.drop(['ef_class', 'ef_binary'], axis=1, errors='ignore')
@@ -43,14 +43,14 @@ def Preprocess(df_train, df_test, df_val, balance = None, classes = 'binary'):
         y_train = y_train_class
         y_test = y_test_class
         y_val = y_val_class
-    
+
     # Handle missing values - TO CHECK LATER (drop or get median for the subclass)
     imputer = SimpleImputer(strategy='mean')
-    
+
     X_train_imputed = pd.DataFrame(imputer.fit_transform(X_train), columns=X_train.columns)
     X_test_imputed = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns)
     X_val_imputed = pd.DataFrame(imputer.transform(X_val), columns=X_val.columns)
-    
+
     # Normalize features
     # use for -1 to 1
     #scaler = StandardScaler()
