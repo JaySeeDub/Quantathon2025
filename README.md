@@ -8,15 +8,11 @@ Repository for the SRNL Challenge at SCQuantum QuantathonV2.
 
 
 ### Install
-```bash
-pip install -e .[dev]
+Run 
+```
+pip install -e .
+pip install -r requirements.txt
 ```
 
 
-### CLI
-```bash
-python -m tornadoq.cli clean-data --help
-python -m tornadoq.cli clean-data --train TRAIN.xlsx --test TEST.xlsx
-python -m tornadoq.cli benchmark-binary --train TRAIN.xlsx --test TEST.xlsx --folds 5 --repeats 2
-python -m tornadoq.cli benchmark-multiclass --train TRAIN.xlsx --test TEST.xlsx
-```
+
