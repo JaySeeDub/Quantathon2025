@@ -42,7 +42,7 @@ def build_circuit(
     gate : {"cx","cz"}
         Two-qubit gate family. Use "cz" if your backend favors symmetric CZ.
     num_layers : int
-        Number of repeated entangling layers.
+        Number of ansatz layers. We use data reuploading.
     alternate_directions : bool
         If using CX, flip control/target each layer to reduce directional bias.
     add_barriers : bool
