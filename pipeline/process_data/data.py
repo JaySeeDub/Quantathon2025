@@ -46,7 +46,7 @@ def load_csv(filename):
 # wrapper for df.to_csv
 def save_csv(df, filename, index = False):
     df.to_csv(filename, index = index)
-    
+
 # =============================================================================
 # Config
 # =============================================================================
@@ -243,7 +243,7 @@ def save_correlation_matrix(X_train_scaled: pd.DataFrame, out_csv: str = "correl
     print("STEP 4: CORRELATION ANALYSIS")
     print("=" * 80)
     corr = X_train_scaled.corr()
-    corr.to_csv(out_csv)
+    # corr.to_csv(out_csv)
     return corr
 
 
