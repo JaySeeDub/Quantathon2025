@@ -32,7 +32,7 @@ def load(model, load_path):
     print(f"Loaded model from {load_path}")
 
 
-def eval(model, test_loader)
+def eval_model(model, test_loader)
     # --- Set model to evaluation mode ---
     model.eval()
     
@@ -56,25 +56,25 @@ def eval(model, test_loader)
     all_targets = torch.cat(all_targets).squeeze().long().numpy()  # integers 0/1
     all_preds = torch.cat(all_preds).squeeze().long().numpy()
     all_outputs = torch.cat(all_outputs).squeeze().numpy()             # floats in [0,1]
-    
+
     # --- Sanity check ---
     print(all_targets.shape, all_preds.shape, all_outputs.shape)
     print(np.unique(all_targets))  # should be [0,1]
-    
+
     # --- Compute Metrics ---
     cm = confusion_matrix(all_targets, all_preds)
     auc = roc_auc_score(all_targets, all_outputs)  # should work now
     f1 = f1_score(all_targets, all_preds)
     acc = accuracy_score(all_targets, all_preds)
-    
+
     # Critical Success Index (CSI)
     tp = cm[1,1]
     fn = cm[1,0]
     fp = cm[0,1]
     csi = tp / (tp + fn + fp)
-    
+
     print(f"AUC: {auc:.4f}, F1: {f1:.4f}, Accuracy: {acc:.4f}, CSI: {csi:.4f}")
-    
+
     # --- Plot Confusion Matrix ---
     plt.figure(figsize=(5,4))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
